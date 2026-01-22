@@ -1,98 +1,209 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useEffect, useState } from "react";
+import {
+  FlatList,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
-
-export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
-
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
-  );
+interface Todo {
+  id: string;
+  text: string;
+  completed: boolean;
 }
 
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});
+export default function TodoListApp() {
+  const [todos, setTodos] = useState<Todo[]>([]);
+  const [inputText, setInputText] = useState("");
+
+  const loadTodos = async () => {
+    const saved = await AsyncStorage.getItem("todos");
+    if (saved) {
+      setTodos(JSON.parse(saved));
+    }
+  };
+
+  const saveTodos = async (todosToSave: Todo[]) => {
+    await AsyncStorage.setItem("todos", JSON.stringify(todosToSave));
+  };
+
+  const addTodo = () => {
+    if (inputText.trim() === "") return;
+
+    const newTodo = {
+      id: Date.now().toString(),
+      text: inputText,
+      completed: false,
+    };
+
+    const updated = [...todos, newTodo];
+    setTodos(updated);
+    saveTodos(updated);
+    setInputText("");
+  };
+
+  const toggleTodo = (id: string) => {
+    const updated = todos.map((todo) =>
+      todo.id === id ? { ...todo, completed: !todo.completed } : todo,
+    );
+    setTodos(updated);
+    saveTodos(updated);
+  };
+
+  const deleteTodo = (id: string) => {
+    const updated = todos.filter((todo) => todo.id !== id);
+    setTodos(updated);
+    saveTodos(updated);
+  };
+
+  useEffect(() => {
+    loadTodos();
+  }, []);
+
+  const renderTodo = ({ item }: { item: Todo }) => (
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "#fff",
+        padding: 16,
+        marginBottom: 8,
+        borderRadius: 12,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+      }}
+    >
+      <TouchableOpacity
+        style={{ flex: 1, flexDirection: "row", alignItems: "center" }}
+        onPress={() => toggleTodo(item.id)}
+      >
+        <View
+          style={{
+            width: 24,
+            height: 24,
+            borderRadius: 12,
+            borderWidth: 2,
+            borderColor: item.completed ? "#6C63FF" : "#ccc",
+            backgroundColor: item.completed ? "#6C63FF" : "transparent",
+            marginRight: 12,
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          {item.completed && (
+            <Text style={{ color: "#fff", fontSize: 14, fontWeight: "bold" }}>
+              ✓
+            </Text>
+          )}
+        </View>
+        <Text
+          style={{
+            fontSize: 16,
+            color: item.completed ? "#aaa" : "#333",
+            flex: 1,
+            textDecorationLine: item.completed ? "line-through" : "none",
+          }}
+        >
+          {item.text}
+        </Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        onPress={() => deleteTodo(item.id)}
+        style={{
+          backgroundColor: "#FFE5E5",
+          paddingHorizontal: 12,
+          paddingVertical: 6,
+          borderRadius: 6,
+        }}
+      >
+        <Text style={{ color: "#FF4757", fontSize: 13, fontWeight: "600" }}>
+          Hapus
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#F8F9FA" }}>
+      <View style={{ paddingHorizontal: 20, paddingTop: 20 }}>
+        <View style={{ marginBottom: 24 }}>
+          <Text
+            style={{
+              fontSize: 32,
+              fontWeight: "bold",
+              color: "#2C3E50",
+              marginBottom: 8,
+            }}
+          >
+            📝 Todo App
+          </Text>
+          <Text style={{ fontSize: 15, color: "#7F8C8D" }}>
+            {todos.filter((t) => !t.completed).length} tugas belum selesai
+          </Text>
+        </View>
+
+        <View style={{ flexDirection: "row", marginBottom: 20, gap: 10 }}>
+          <TextInput
+            style={{
+              flex: 1,
+              backgroundColor: "#fff",
+              borderRadius: 12,
+              paddingHorizontal: 16,
+              paddingVertical: 14,
+              fontSize: 15,
+              borderWidth: 1,
+              borderColor: "#E8E8E8",
+            }}
+            placeholder="Tambah tugas baru..."
+            placeholderTextColor="#999"
+            value={inputText}
+            onChangeText={setInputText}
+            onSubmitEditing={addTodo}
+          />
+          <TouchableOpacity
+            style={{
+              backgroundColor: "#6C63FF",
+              paddingHorizontal: 24,
+              paddingVertical: 14,
+              borderRadius: 12,
+              justifyContent: "center",
+            }}
+            onPress={addTodo}
+          >
+            <Text style={{ color: "#fff", fontSize: 15, fontWeight: "600" }}>
+              Tambah
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <FlatList
+        data={todos}
+        renderItem={renderTodo}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 20 }}
+        ListEmptyComponent={
+          <View
+            style={{
+              alignItems: "center",
+              justifyContent: "center",
+              paddingVertical: 60,
+            }}
+          >
+            <Text style={{ fontSize: 48, marginBottom: 12 }}>📋</Text>
+            <Text style={{ fontSize: 16, color: "#999", textAlign: "center" }}>
+              Belum ada tugas.{"\n"}tambahkan sesuatu
+            </Text>
+          </View>
+        }
+      />
+    </SafeAreaView>
+  );
+}
