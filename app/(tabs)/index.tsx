@@ -15,7 +15,12 @@ interface Todo {
   completed: boolean;
 }
 
-export default function TodoListApp() {
+// Tambahkan type untuk props navigation
+type TodoListAppProps = {
+  navigation: any; // atau gunakan type yang lebih spesifik dari @react-navigation/native
+};
+
+export default function TodoListApp({ navigation }: TodoListAppProps) {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [inputText, setInputText] = useState("");
 
@@ -32,13 +37,11 @@ export default function TodoListApp() {
 
   const addTodo = () => {
     if (inputText.trim() === "") return;
-
     const newTodo = {
       id: Date.now().toString(),
       text: inputText,
       completed: false,
     };
-
     const updated = [...todos, newTodo];
     setTodos(updated);
     saveTodos(updated);
@@ -68,52 +71,28 @@ export default function TodoListApp() {
       style={{
         flexDirection: "row",
         alignItems: "center",
-        backgroundColor: "#fff",
+        backgroundColor: "#F5F5F5",
         padding: 16,
-        marginBottom: 8,
-        borderRadius: 12,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
+        marginVertical: 4,
+        borderRadius: 8,
       }}
     >
       <TouchableOpacity
-        style={{ flex: 1, flexDirection: "row", alignItems: "center" }}
         onPress={() => toggleTodo(item.id)}
+        style={{ flex: 1, flexDirection: "row", alignItems: "center" }}
       >
-        <View
-          style={{
-            width: 24,
-            height: 24,
-            borderRadius: 12,
-            borderWidth: 2,
-            borderColor: item.completed ? "#6C63FF" : "#ccc",
-            backgroundColor: item.completed ? "#6C63FF" : "transparent",
-            marginRight: 12,
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          {item.completed && (
-            <Text style={{ color: "#fff", fontSize: 14, fontWeight: "bold" }}>
-              ✓
-            </Text>
-          )}
-        </View>
+        {item.completed && (
+          <Text style={{ marginRight: 8, color: "#4CAF50" }}>✓</Text>
+        )}
         <Text
           style={{
-            fontSize: 16,
-            color: item.completed ? "#aaa" : "#333",
-            flex: 1,
             textDecorationLine: item.completed ? "line-through" : "none",
+            color: item.completed ? "#999" : "#000",
           }}
         >
           {item.text}
         </Text>
       </TouchableOpacity>
-
       <TouchableOpacity
         onPress={() => deleteTodo(item.id)}
         style={{
@@ -123,63 +102,63 @@ export default function TodoListApp() {
           borderRadius: 6,
         }}
       >
-        <Text style={{ color: "#FF4757", fontSize: 13, fontWeight: "600" }}>
-          Hapus
-        </Text>
+        <Text style={{ color: "#F44336" }}>Hapus</Text>
       </TouchableOpacity>
     </View>
   );
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#F8F9FA" }}>
-      <View style={{ paddingHorizontal: 20, paddingTop: 20 }}>
-        <View style={{ marginBottom: 24 }}>
-          <Text
-            style={{
-              fontSize: 32,
-              fontWeight: "bold",
-              color: "#2C3E50",
-              marginBottom: 8,
-            }}
-          >
-            📝 Todo App
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#FFF" }}>
+      <View style={{ padding: 20 }}>
+        <Text style={{ fontSize: 28, fontWeight: "bold", marginBottom: 8 }}>
+          Todo List appp tesftiy
+        </Text>
+        <Text style={{ fontSize: 14, color: "#666", marginBottom: 20 }}>
+          {todos.filter((t) => !t.completed).length} tugas belum selesai
+        </Text>
+
+        {/* Button untuk pindah ke book.tsx */}
+        <TouchableOpacity
+          onPress={() => navigation.navigate("books")}
+          style={{
+            backgroundColor: "#2196F3",
+            padding: 16,
+            borderRadius: 8,
+            marginBottom: 20,
+            alignItems: "center",
+          }}
+        >
+          <Text style={{ color: "#FFF", fontSize: 16, fontWeight: "600" }}>
+            Ke Halaman Book
           </Text>
-          <Text style={{ fontSize: 15, color: "#7F8C8D" }}>
-            {todos.filter((t) => !t.completed).length} tugas belum selesai
-          </Text>
-        </View>
+        </TouchableOpacity>
 
         <View style={{ flexDirection: "row", marginBottom: 20, gap: 10 }}>
           <TextInput
             style={{
               flex: 1,
-              backgroundColor: "#fff",
-              borderRadius: 12,
-              paddingHorizontal: 16,
-              paddingVertical: 14,
-              fontSize: 15,
               borderWidth: 1,
-              borderColor: "#E8E8E8",
+              borderColor: "#DDD",
+              borderRadius: 8,
+              paddingHorizontal: 16,
+              paddingVertical: 12,
             }}
-            placeholder="Tambah tugas baru..."
-            placeholderTextColor="#999"
             value={inputText}
             onChangeText={setInputText}
+            placeholder="Tambahkan tugas baru..."
             onSubmitEditing={addTodo}
           />
           <TouchableOpacity
+            onPress={addTodo}
             style={{
-              backgroundColor: "#6C63FF",
-              paddingHorizontal: 24,
-              paddingVertical: 14,
-              borderRadius: 12,
+              backgroundColor: "#4CAF50",
+              paddingHorizontal: 20,
+              paddingVertical: 12,
+              borderRadius: 8,
               justifyContent: "center",
             }}
-            onPress={addTodo}
           >
-            <Text style={{ color: "#fff", fontSize: 15, fontWeight: "600" }}>
-              Tambah
-            </Text>
+            <Text style={{ color: "#FFF", fontWeight: "600" }}>Tambah</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -188,16 +167,13 @@ export default function TodoListApp() {
         data={todos}
         renderItem={renderTodo}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 20 }}
+        contentContainerStyle={{
+          paddingHorizontal: 20,
+          paddingBottom: 20,
+        }}
         ListEmptyComponent={
-          <View
-            style={{
-              alignItems: "center",
-              justifyContent: "center",
-              paddingVertical: 60,
-            }}
-          >
-            <Text style={{ fontSize: 48, marginBottom: 12 }}>📋</Text>
+          <View style={{ alignItems: "center", marginTop: 40 }}>
+            <Text style={{ fontSize: 48, marginBottom: 16 }}>📋</Text>
             <Text style={{ fontSize: 16, color: "#999", textAlign: "center" }}>
               Belum ada tugas.{"\n"}tambahkan sesuatu
             </Text>
